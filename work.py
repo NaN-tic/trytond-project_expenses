@@ -19,8 +19,8 @@ class ProjectExpense(ModelSQL, ModelView):
     product = fields.Many2One('product.product', 'Product', required=True,
         on_change=['product', 'unit', 'quantity', 'name', 'work'],
         depends=['work'])
-    quantity = fields.Float('Quantity',
-        digits=(16, Eval('unit_digits', 2)))
+    quantity = fields.Float('Quantity', digits=(16, Eval('unit_digits', 2)),
+        depends=['unit_digits'])
     unit = fields.Many2One('product.uom', 'Unit')
     unit_digits = fields.Function(fields.Integer('Unit Digits',
         on_change_with=['unit']), 'on_change_with_unit_digits')
