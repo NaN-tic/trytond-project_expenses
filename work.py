@@ -16,17 +16,14 @@ class ProjectExpense(ModelSQL, ModelView):
     __name__ = 'project.work.expense'
 
     name = fields.Char('Name', required=True, select=True)
-    product = fields.Many2One('product.product', 'Product', required=True,
-        on_change=['product', 'unit', 'quantity', 'name', 'work'],
-        depends=['work'])
+    product = fields.Many2One('product.product', 'Product', required=True)
     quantity = fields.Float('Quantity', digits=(16, Eval('unit_digits', 2)),
         depends=['unit_digits'])
     unit = fields.Many2One('product.uom', 'Unit')
-    unit_digits = fields.Function(fields.Integer('Unit Digits',
-        on_change_with=['unit']), 'on_change_with_unit_digits')
+    unit_digits = fields.Function(fields.Integer('Unit Digits'),
+        'on_change_with_unit_digits')
     product_uom_category = fields.Function(
-        fields.Many2One('product.uom.category', 'Product Uom Category',
-            on_change_with=['product']),
+        fields.Many2One('product.uom.category', 'Product Uom Category'),
         'on_change_with_product_uom_category')
     unit_price = fields.Numeric('Unit Price', digits=(16, 4))
     work = fields.Many2One('project.work', 'Work')
@@ -41,6 +38,7 @@ class ProjectExpense(ModelSQL, ModelView):
         default.setdefault('invoice_line', None)
         return super(ProjectExpense, cls).copy(records, default=default)
 
+    @fields.depends('product', 'unit', 'quantity', 'name', 'work')
     def on_change_product(self):
         Product = Pool().get('product.product')
 
@@ -68,14 +66,15 @@ class ProjectExpense(ModelSQL, ModelView):
         if not self.name:
             with Transaction().set_context(party_context):
                 res['name'] = Product(self.product.id).rec_name
-
         return res
 
+    @fields.depends('unit')
     def on_change_with_unit_digits(self, name=None):
         if self.unit:
             return self.unit.digits
         return 2
 
+    @fields.depends('product')
     def on_change_with_product_uom_category(self, name=None):
         if self.product:
             return self.product.default_uom_category.id
